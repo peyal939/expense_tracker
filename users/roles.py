@@ -1,0 +1,4 @@
+ROLE_ADMIN = "Admin"
+ROLE_USER = "User"
+
+ALL_ROLES = (ROLE_ADMIN, ROLE_USER)
