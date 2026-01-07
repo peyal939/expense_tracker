@@ -54,7 +54,8 @@ export default function Budgets() {
   const fetchCategories = async () => {
     try {
       const response = await categoriesAPI.list()
-      setCategories(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setCategories(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching categories:', error)
     }
@@ -63,7 +64,8 @@ export default function Budgets() {
   const fetchIncomeSources = async () => {
     try {
       const response = await budgetsAPI.incomeSources.list()
-      setIncomeSources(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setIncomeSources(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching income sources:', error)
     }
@@ -72,7 +74,8 @@ export default function Budgets() {
   const fetchIncomes = async () => {
     try {
       const response = await budgetsAPI.incomes.getTotal(selectedMonth)
-      setIncomes(response.data.incomes || [])
+      const data = response.data?.incomes ?? response.data
+      setIncomes(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching incomes:', error)
     }
@@ -90,7 +93,8 @@ export default function Budgets() {
   const fetchAllocations = async () => {
     try {
       const response = await budgetsAPI.allocations.list({ month: selectedMonth, scope: 'category' })
-      setAllocations(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setAllocations(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching allocations:', error)
     }

@@ -47,6 +47,10 @@ export default function AdminDashboard() {
   }
 
   const overview = stats?.overview || {}
+  const topSpenders = Array.isArray(stats?.top_spenders) ? stats.top_spenders : []
+  const topCategories = Array.isArray(stats?.top_categories) ? stats.top_categories : []
+  const monthlyTrends = Array.isArray(stats?.monthly_trends) ? stats.monthly_trends : []
+  const roleDistribution = Array.isArray(stats?.role_distribution) ? stats.role_distribution : []
 
   return (
     <div className="space-y-6">
@@ -227,7 +231,7 @@ export default function AdminDashboard() {
             </h3>
           </div>
           <div className="divide-y divide-slate-800">
-            {stats?.top_spenders?.slice(0, 5).map((user, index) => (
+            {topSpenders.slice(0, 5).map((user, index) => (
               <div key={user.id} className="flex items-center justify-between p-3 sm:p-4 hover:bg-slate-800/50 transition-colors">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm flex-shrink-0 ${
@@ -248,7 +252,7 @@ export default function AdminDashboard() {
                 </span>
               </div>
             ))}
-            {(!stats?.top_spenders || stats.top_spenders.length === 0) && (
+            {topSpenders.length === 0 && (
               <div className="p-8 text-center text-slate-500">
                 No spending data yet
               </div>
@@ -265,8 +269,8 @@ export default function AdminDashboard() {
             </h3>
           </div>
           <div className="divide-y divide-slate-800">
-            {stats?.top_categories?.slice(0, 5).map((cat, index) => {
-              const maxTotal = stats.top_categories[0]?.total || 1
+            {topCategories.slice(0, 5).map((cat, index) => {
+              const maxTotal = topCategories[0]?.total || 1
               const percentage = ((cat.total || 0) / maxTotal) * 100
               return (
                 <div key={index} className="p-4 hover:bg-slate-800/50 transition-colors">
@@ -293,7 +297,7 @@ export default function AdminDashboard() {
                 </div>
               )
             })}
-            {(!stats?.top_categories || stats.top_categories.length === 0) && (
+            {topCategories.length === 0 && (
               <div className="p-8 text-center text-slate-500">
                 No category data yet
               </div>
@@ -311,10 +315,10 @@ export default function AdminDashboard() {
           </h3>
         </div>
         <div className="p-5">
-          {stats?.monthly_trends && stats.monthly_trends.length > 0 ? (
+          {monthlyTrends.length > 0 ? (
             <div className="space-y-4">
-              {stats.monthly_trends.map((month, index) => {
-                const maxTotal = Math.max(...stats.monthly_trends.map(m => m.total || 0))
+              {monthlyTrends.map((month, index) => {
+                const maxTotal = Math.max(...monthlyTrends.map(m => m.total || 0))
                 const percentage = maxTotal > 0 ? ((month.total || 0) / maxTotal) * 100 : 0
                 const date = new Date(month.month)
                 return (
@@ -357,7 +361,7 @@ export default function AdminDashboard() {
           User Role Distribution
         </h3>
         <div className="flex flex-wrap gap-4">
-          {stats?.role_distribution?.map((role, index) => (
+          {roleDistribution.map((role, index) => (
             <div 
               key={index}
               className={`px-5 py-3 rounded-xl ${

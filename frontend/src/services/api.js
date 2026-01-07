@@ -11,6 +11,8 @@ const api = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
+    // Skip ngrok's browser warning interstitial page (free tier)
+    'ngrok-skip-browser-warning': 'true',
   },
 })
 
@@ -41,8 +43,14 @@ api.interceptors.response.use(
           throw new Error('No refresh token')
         }
 
+        // Use axios directly but include the ngrok header
         const response = await axios.post(`${API_BASE}/auth/token/refresh/`, {
           refresh: refreshToken,
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          }
         })
 
         const { access } = response.data
@@ -53,7 +61,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
-        window.location.href = '/login'
+        // Avoid a full page reload (which can 404 inside WebView).
+        // With HashRouter, this reliably navigates to the login page.
+        window.location.hash = '#/login'
         return Promise.reject(refreshError)
       }
     }

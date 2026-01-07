@@ -29,7 +29,8 @@ export default function AdminNotifications() {
         usersAPI.list()
       ])
       setStats(statsRes.data)
-      setUsers(usersRes.data.results || usersRes.data)
+      const usersData = usersRes.data?.results ?? usersRes.data
+      setUsers(Array.isArray(usersData) ? usersData : [])
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -150,7 +151,7 @@ export default function AdminNotifications() {
           </h3>
         </div>
         <div className="p-5">
-          {stats?.by_type && stats.by_type.length > 0 ? (
+          {Array.isArray(stats?.by_type) && stats.by_type.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {stats.by_type.map((type, index) => (
                 <div key={index} className="bg-slate-800 rounded-xl p-4">

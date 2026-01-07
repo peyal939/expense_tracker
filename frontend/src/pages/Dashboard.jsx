@@ -96,11 +96,15 @@ export default function Dashboard() {
         reportsAPI.getTimeseries(weekStart, weekEnd, 'daily'),
       ])
 
-      setExpenses(expensesRes.data.results || expensesRes.data)
-      setCategories(categoriesRes.data.results || categoriesRes.data)
+      const expensesData = expensesRes.data?.results ?? expensesRes.data
+      const categoriesData = categoriesRes.data?.results ?? categoriesRes.data
+      const timeseriesData = timeseriesRes.data?.series ?? timeseriesRes.data
+
+      setExpenses(Array.isArray(expensesData) ? expensesData : [])
+      setCategories(Array.isArray(categoriesData) ? categoriesData : [])
       setSummary(summaryRes.data)
       setBudgetStatus(budgetRes.data)
-      setTimeseries(timeseriesRes.data.series || [])
+      setTimeseries(Array.isArray(timeseriesData) ? timeseriesData : [])
 
       // Fetch monthly budget and income data
       try {
@@ -157,10 +161,13 @@ export default function Dashboard() {
   })) || []
 
   // Prepare weekly data for area chart
-  const weeklyData = timeseries.map(item => ({
+  const weeklyData = (Array.isArray(timeseries) ? timeseries : []).map(item => ({
     day: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
     amount: parseFloat(item.total),
   }))
+
+  const budgetCategories = Array.isArray(budgetStatus?.categories) ? budgetStatus.categories : []
+  const recentExpenses = Array.isArray(expenses) ? expenses : []
 
   // Days remaining in month
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
@@ -421,7 +428,7 @@ export default function Dashboard() {
       )}
 
       {/* Budget Allocations Overview */}
-      {budgetStatus?.categories && budgetStatus.categories.length > 0 && (
+      {budgetCategories.length > 0 && (
         <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-white flex items-center gap-2">
@@ -453,20 +460,20 @@ export default function Dashboard() {
             <div className="bg-slate-800/50 rounded-xl p-2 sm:p-3">
               <p className="text-slate-400 text-[10px] sm:text-xs">Allocated</p>
               <p className="text-sm sm:text-lg font-bold text-white">
-                {budgetStatus.categories.length} categories
+                {budgetCategories.length} categories
               </p>
             </div>
             <div className="bg-slate-800/50 rounded-xl p-2 sm:p-3">
               <p className="text-slate-400 text-[10px] sm:text-xs">At Risk</p>
               <p className="text-sm sm:text-lg font-bold text-amber-400">
-                {budgetStatus.categories.filter(c => c.status === 'warn' || c.status === 'exceeded').length}
+                {budgetCategories.filter(c => c.status === 'warn' || c.status === 'exceeded').length}
               </p>
             </div>
           </div>
 
           {/* Category Allocations */}
           <div className="space-y-3">
-            {budgetStatus.categories.slice(0, 5).map((cat, index) => {
+            {budgetCategories.slice(0, 5).map((cat, index) => {
               const category = getCategoryById(cat.category_id)
               const color = category?.color_token || '#8b5cf6'
               const percentUsed = cat.percent_used ? parseFloat(cat.percent_used) * 100 : 0
@@ -516,9 +523,9 @@ export default function Dashboard() {
                 </div>
               )
             })}
-            {budgetStatus.categories.length > 5 && (
+            {budgetCategories.length > 5 && (
               <p className="text-xs text-slate-500 text-center pt-2">
-                +{budgetStatus.categories.length - 5} more categories
+                +{budgetCategories.length - 5} more categories
               </p>
             )}
           </div>
@@ -560,7 +567,7 @@ export default function Dashboard() {
           </a>
         </div>
         <div className="divide-y divide-slate-800">
-          {expenses.slice(0, 6).map((expense) => {
+          {recentExpenses.slice(0, 6).map((expense) => {
             const category = getCategoryById(expense.category)
             const IconComponent = category ? getIcon(category.icon) : Wallet
             const color = category?.color_token || '#8b5cf6'
@@ -593,7 +600,7 @@ export default function Dashboard() {
               </div>
             )
           })}
-          {expenses.length === 0 && (
+          {recentExpenses.length === 0 && (
             <div className="p-8 text-center text-slate-500">
               No expenses yet. Add your first expense to get started!
             </div>

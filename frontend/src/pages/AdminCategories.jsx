@@ -40,7 +40,8 @@ export default function AdminCategories() {
   const fetchCategories = async () => {
     try {
       const response = await adminPanelAPI.categories.list()
-      setCategories(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setCategories(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching categories:', error)
     } finally {
@@ -417,7 +418,7 @@ export default function AdminCategories() {
                 </div>
               </div>
               
-              {usageStats.monthly_usage && usageStats.monthly_usage.length > 0 && (
+              {Array.isArray(usageStats?.monthly_usage) && usageStats.monthly_usage.length > 0 && (
                 <div>
                   <h4 className="font-medium text-white mb-3">Monthly Usage</h4>
                   <div className="space-y-2">

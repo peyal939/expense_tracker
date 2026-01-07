@@ -94,7 +94,8 @@ export default function Categories() {
   const fetchCategories = async () => {
     try {
       const response = await categoriesAPI.list()
-      setCategories(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setCategories(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching categories:', error)
     } finally {

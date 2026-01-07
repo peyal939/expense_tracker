@@ -24,7 +24,8 @@ export default function AdminIncomeSources() {
   const fetchSources = async () => {
     try {
       const response = await adminPanelAPI.incomeSources.list()
-      setSources(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setSources(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching income sources:', error)
     } finally {

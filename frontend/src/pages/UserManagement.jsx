@@ -20,7 +20,8 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       const response = await usersAPI.list()
-      setUsers(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setUsers(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching users:', error)
     } finally {

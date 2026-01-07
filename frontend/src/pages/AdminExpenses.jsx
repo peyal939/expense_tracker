@@ -40,7 +40,8 @@ export default function AdminExpenses() {
       })
       
       const response = await adminPanelAPI.expenses.list(params)
-      setExpenses(response.data.results || response.data)
+      const expensesData = response.data?.results ?? response.data
+      setExpenses(Array.isArray(expensesData) ? expensesData : [])
       if (response.data.count) {
         setTotalPages(Math.ceil(response.data.count / 20))
       }
@@ -313,7 +314,7 @@ export default function AdminExpenses() {
       )}
 
       {/* By User Summary */}
-      {summary?.by_user && summary.by_user.length > 0 && (
+      {Array.isArray(summary?.by_user) && summary.by_user.length > 0 && (
         <div className="bg-slate-900 rounded-xl border border-slate-800">
           <div className="p-5 border-b border-slate-800">
             <h3 className="font-semibold text-white flex items-center gap-2">

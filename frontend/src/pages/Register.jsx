@@ -77,8 +77,8 @@ export default function Register() {
       localStorage.setItem('access_token', loginResponse.data.access)
       localStorage.setItem('refresh_token', loginResponse.data.refresh)
       
-      // Redirect to dashboard
-      window.location.href = '/'
+      // Redirect to dashboard (SPA navigation; avoids WebView blank screens)
+      navigate('/', { replace: true })
     } catch (err) {
       if (err.response?.data) {
         const serverErrors = err.response.data

@@ -58,7 +58,8 @@ export default function Layout() {
   const fetchNotifications = async () => {
     try {
       const response = await notificationsAPI.getUnread()
-      setNotifications(response.data.notifications || [])
+      const data = response.data?.notifications ?? response.data
+      setNotifications(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching notifications:', error)
     }
@@ -69,7 +70,8 @@ export default function Layout() {
       const now = new Date()
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
       const response = await budgetsAPI.getWarnings(month)
-      const warningList = response.data.warnings || []
+      const warningData = response.data?.warnings ?? response.data
+      const warningList = Array.isArray(warningData) ? warningData : []
       setWarnings(warningList)
       
       // Show modal if there are warnings (first login check)

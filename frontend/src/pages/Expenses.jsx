@@ -55,7 +55,8 @@ export default function Expenses() {
   const fetchCategories = async () => {
     try {
       const response = await categoriesAPI.list()
-      setCategories(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setCategories(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching categories:', error)
     }
@@ -75,7 +76,8 @@ export default function Expenses() {
       if (filters.date_to) params.date_to = filters.date_to
 
       const response = await expensesAPI.list(params)
-      setExpenses(response.data.results || response.data)
+      const expensesData = response.data?.results ?? response.data
+      setExpenses(Array.isArray(expensesData) ? expensesData : [])
       setPagination(prev => ({
         ...prev,
         total: response.data.count || response.data.length,

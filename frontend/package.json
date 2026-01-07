@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:web": "copy .env.web .env && vite build",
+    "build:android": "copy .env.android .env && vite build && npx cap sync android",
     "lint": "eslint .",
     "preview": "vite preview"
   },

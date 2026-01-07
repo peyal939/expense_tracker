@@ -49,7 +49,8 @@ export default function Reports() {
   const fetchCategories = async () => {
     try {
       const response = await categoriesAPI.list()
-      setCategories(response.data.results || response.data)
+      const data = response.data?.results ?? response.data
+      setCategories(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching categories:', error)
     }
@@ -72,7 +73,8 @@ export default function Reports() {
 
       if (activeTab === 'timeseries') {
         const timeseriesRes = await reportsAPI.getTimeseries(dateRange.start, dateRange.end, timeseriesBucket)
-        setTimeseries(timeseriesRes.data.series || [])
+        const series = timeseriesRes.data?.series ?? timeseriesRes.data
+        setTimeseries(Array.isArray(series) ? series : [])
       }
 
       if (activeTab === 'spending-trends') {
@@ -136,7 +138,7 @@ export default function Reports() {
   })) || []
 
   // Prepare timeseries data for chart
-  const chartData = timeseries.map(item => ({
+  const chartData = (Array.isArray(timeseries) ? timeseries : []).map(item => ({
     date: timeseriesBucket === 'daily'
       ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       : `Week ${new Date(item.week_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
@@ -752,7 +754,7 @@ export default function Reports() {
                   <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
                     <h3 className="font-semibold text-white mb-4">Top Spending Categories</h3>
                     <div className="space-y-4">
-                      {spendingTrends.top_categories?.map((cat, index) => {
+                      {(Array.isArray(spendingTrends?.top_categories) ? spendingTrends.top_categories : []).map((cat, index) => {
                         const totalSpent = spendingTrends.totals?.total_spent || 1
                         const percent = (cat.total / totalSpent) * 100
                         const category = categories.find(c => c.id === cat.category_id)
@@ -920,7 +922,7 @@ export default function Reports() {
                           </tr>
                         </thead>
                         <tbody>
-                          {monthEndSummary.spending?.by_category?.map((cat, index) => {
+                          {(Array.isArray(monthEndSummary?.spending?.by_category) ? monthEndSummary.spending.by_category : []).map((cat, index) => {
                             const category = categories.find(c => c.id === cat.category_id)
                             const color = category?.color_token || '#8b5cf6'
                             
@@ -977,25 +979,25 @@ export default function Reports() {
                       <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
                         <span className="text-slate-400">Total Categories</span>
                         <span className="text-white font-medium">
-                          {monthEndSummary.spending?.by_category?.length || 0}
+                          {(Array.isArray(monthEndSummary?.spending?.by_category) ? monthEndSummary.spending.by_category : []).length}
                         </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
                         <span className="text-slate-400">Categories Over Budget</span>
                         <span className="text-rose-400 font-medium">
-                          {monthEndSummary.spending?.by_category?.filter(c => c.status === 'exceeded').length || 0}
+                          {(Array.isArray(monthEndSummary?.spending?.by_category) ? monthEndSummary.spending.by_category : []).filter(c => c.status === 'exceeded').length}
                         </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
                         <span className="text-slate-400">Categories Warning</span>
                         <span className="text-amber-400 font-medium">
-                          {monthEndSummary.spending?.by_category?.filter(c => c.status === 'warning').length || 0}
+                          {(Array.isArray(monthEndSummary?.spending?.by_category) ? monthEndSummary.spending.by_category : []).filter(c => c.status === 'warning').length}
                         </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
                         <span className="text-slate-400">Categories On Track</span>
                         <span className="text-emerald-400 font-medium">
-                          {monthEndSummary.spending?.by_category?.filter(c => c.status === 'ok').length || 0}
+                          {(Array.isArray(monthEndSummary?.spending?.by_category) ? monthEndSummary.spending.by_category : []).filter(c => c.status === 'ok').length}
                         </span>
                       </div>
                     </div>
