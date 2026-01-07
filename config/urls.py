@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from rest_framework.permissions import AllowAny
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from users.views import RegisterView
 
 
 class PublicTokenObtainPairView(TokenObtainPairView):
@@ -38,6 +39,7 @@ urlpatterns = [
     path('api/v1/', include('core.urls')),
     path('api/v1/auth/token/', PublicTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v1/auth/token/refresh/', PublicTokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/auth/register/', RegisterView.as_view(), name='register'),
 ]
 
 if settings.DEBUG:

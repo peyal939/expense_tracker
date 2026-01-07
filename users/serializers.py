@@ -40,10 +40,18 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "password", "is_active", "groups"]
 
     def create(self, validated_data):
-        groups = validated_data.pop("groups", [])
+        groups = validated_data.pop("groups", None)
         password = validated_data.pop("password")
         user = User.objects.create_user(**validated_data, password=password)
-        user.groups.set(groups)
+        
+        # If groups are explicitly provided, use those; otherwise assign to "User" group by default
+        if groups is not None:
+            user.groups.set(groups)
+        else:
+            # Auto-assign new users to the "User" group
+            user_group, _ = Group.objects.get_or_create(name="User")
+            user.groups.add(user_group)
+        
         return user
 
     def update(self, instance, validated_data):

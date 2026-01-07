@@ -16,6 +16,7 @@ urlpatterns = [
     path("reports/", include("reports.urls")),
     path("export/", include("export_api.urls")),
     path("ai/", include("ai.urls")),
+    path("admin-panel/", include("admin_panel.urls")),
 ]
 
 urlpatterns += router.urls

@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Expenses from './pages/Expenses'
 import Categories from './pages/Categories'
@@ -9,6 +11,10 @@ import Budgets from './pages/Budgets'
 import Reports from './pages/Reports'
 import AdminDashboard from './pages/AdminDashboard'
 import UserManagement from './pages/UserManagement'
+import AdminCategories from './pages/AdminCategories'
+import AdminIncomeSources from './pages/AdminIncomeSources'
+import AdminExpenses from './pages/AdminExpenses'
+import AdminNotifications from './pages/AdminNotifications'
 import Settings from './pages/Settings'
 import { Loader2 } from 'lucide-react'
 
@@ -25,7 +31,7 @@ function ProtectedRoute({ children, adminOnly = false }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/landing" replace />
   }
 
   if (adminOnly && !user.is_superuser && !user.roles?.includes('Admin')) {
@@ -48,8 +54,12 @@ export default function App() {
 
   return (
     <Routes>
+      {/* Public routes */}
+      <Route path="/landing" element={user ? <Navigate to="/" replace /> : <Landing />} />
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/register" element={user ? <Navigate to="/" replace /> : <Register />} />
       
+      {/* Protected routes */}
       <Route path="/" element={
         <ProtectedRoute>
           <Layout />
@@ -71,6 +81,26 @@ export default function App() {
         <Route path="admin/users" element={
           <ProtectedRoute adminOnly>
             <UserManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/categories" element={
+          <ProtectedRoute adminOnly>
+            <AdminCategories />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/income-sources" element={
+          <ProtectedRoute adminOnly>
+            <AdminIncomeSources />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/expenses" element={
+          <ProtectedRoute adminOnly>
+            <AdminExpenses />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/notifications" element={
+          <ProtectedRoute adminOnly>
+            <AdminNotifications />
           </ProtectedRoute>
         } />
       </Route>

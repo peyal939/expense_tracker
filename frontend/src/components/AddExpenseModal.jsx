@@ -89,8 +89,14 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
         payload.notes = formData.notes
       }
       
-      await expensesAPI.create(payload)
-      onSuccess()
+      const response = await expensesAPI.create(payload)
+      
+      // Pass the created expense data back, including category name
+      const categoryName = categories.find(c => c.id === formData.category)?.name
+      onSuccess({
+        ...response.data,
+        category_name: categoryName,
+      })
     } catch (err) {
       const data = err.response?.data
       if (data) {
@@ -108,20 +114,20 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900 rounded-2xl w-full max-w-md border border-slate-800 overflow-hidden animate-slide-up">
-        <div className="flex items-center justify-between p-5 border-b border-slate-800">
-          <h3 className="text-lg font-semibold text-white">Add Expense</h3>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50">
+      <div className="bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md border border-slate-800 overflow-hidden animate-slide-up max-h-[90vh] sm:max-h-[85vh]">
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
+          <h3 className="text-base sm:text-lg font-semibold text-white">Add Expense</h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
           >
             <X size={20} className="text-slate-400" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+          <div className="p-4 sm:p-5 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
             {error && (
               <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm">
                 {error}
@@ -129,21 +135,21 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
             )}
 
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Description *</label>
+              <label className="block text-sm text-slate-400 mb-1.5 sm:mb-2">Description *</label>
               <input
                 type="text"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="What did you spend on?"
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors text-base"
                 required
                 autoFocus
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Amount *</label>
+                <label className="block text-sm text-slate-400 mb-1.5 sm:mb-2">Amount *</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">৳</span>
                   <input
@@ -153,25 +159,25 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="0.00"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-8 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-8 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors text-base"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Date</label>
+                <label className="block text-sm text-slate-400 mb-1.5 sm:mb-2">Date</label>
                 <input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 transition-colors text-base"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Category</label>
+              <label className="block text-sm text-slate-400 mb-1.5 sm:mb-2">Category</label>
               {loadingAllocations ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader2 size={20} className="animate-spin text-violet-500" />
@@ -193,7 +199,7 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
                       Showing categories with budget allocations only
                     </p>
                   )}
-                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                  <div className="grid grid-cols-3 gap-2 max-h-32 sm:max-h-40 overflow-y-auto">
                     {displayCategories.map((cat) => {
                       const IconComponent = getIcon(cat.icon)
                       return (
@@ -201,14 +207,14 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
                           key={cat.id}
                           type="button"
                           onClick={() => setFormData({ ...formData, category: cat.id })}
-                          className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
+                          className={`flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl border transition-all ${
                             formData.category === cat.id
                               ? 'border-violet-500 bg-violet-500/10'
                               : 'border-slate-700 hover:border-slate-600'
                           }`}
                         >
-                          <IconComponent size={20} style={{ color: cat.color_token || '#8b5cf6' }} />
-                          <span className="text-xs text-slate-300 truncate w-full text-center">
+                          <IconComponent size={18} className="sm:w-5 sm:h-5" style={{ color: cat.color_token || '#8b5cf6' }} />
+                          <span className="text-[10px] sm:text-xs text-slate-300 truncate w-full text-center">
                             {cat.name.split(' ')[0]}
                           </span>
                         </button>
@@ -220,29 +226,29 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
             </div>
 
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Merchant (optional)</label>
+              <label className="block text-sm text-slate-400 mb-1.5 sm:mb-2">Merchant (optional)</label>
               <input
                 type="text"
                 value={formData.merchant}
                 onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
                 placeholder="Store or vendor name"
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors text-base"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Notes (optional)</label>
+              <label className="block text-sm text-slate-400 mb-1.5 sm:mb-2">Notes (optional)</label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Additional details..."
                 rows={2}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none text-base"
               />
             </div>
           </div>
 
-          <div className="p-5 border-t border-slate-800">
+          <div className="p-4 sm:p-5 border-t border-slate-800 sticky bottom-0 bg-slate-900">
             <button
               type="submit"
               disabled={loading || displayCategories.length === 0}

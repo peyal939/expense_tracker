@@ -9,8 +9,10 @@ import {
   CheckCircle2, XCircle, Target, Wallet, PiggyBank, Activity,
 } from 'lucide-react'
 import { reportsAPI, categoriesAPI, exportAPI } from '../services/api'
+import { useOnboarding } from '../context/OnboardingContext'
 
 export default function Reports() {
+  const { markReportsViewed } = useOnboarding()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('summary')
   const [categories, setCategories] = useState([])
@@ -36,6 +38,8 @@ export default function Reports() {
 
   useEffect(() => {
     fetchCategories()
+    // Mark reports as viewed when component mounts
+    markReportsViewed()
   }, [])
 
   useEffect(() => {
@@ -210,83 +214,87 @@ export default function Reports() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Reports & Analytics</h1>
-          <p className="text-slate-400 mt-1">Analyze your spending patterns</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Reports & Analytics</h1>
+          <p className="text-slate-400 mt-1 text-sm sm:text-base">Analyze your spending patterns</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-300 hover:text-white hover:border-slate-600 transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-300 hover:text-white hover:border-slate-600 transition-colors text-sm"
           >
-            <Download size={18} />
-            Export CSV
+            <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">CSV</span>
           </button>
           <button
             onClick={handleExportBackup}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-300 hover:text-white hover:border-slate-600 transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-300 hover:text-white hover:border-slate-600 transition-colors text-sm"
           >
-            <Download size={18} />
-            Full Backup
+            <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <span className="hidden sm:inline">Full Backup</span>
+            <span className="sm:hidden">Backup</span>
           </button>
         </div>
       </div>
 
       {/* Date Range Selector */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          <div className="flex flex-wrap gap-2">
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-3 sm:p-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {[
               { id: 'thisMonth', label: 'This Month' },
               { id: 'lastMonth', label: 'Last Month' },
-              { id: 'last30', label: 'Last 30 Days' },
-              { id: 'last90', label: 'Last 90 Days' },
+              { id: 'last30', label: '30 Days' },
+              { id: 'last90', label: '90 Days' },
               { id: 'thisYear', label: 'This Year' },
             ].map((preset) => (
               <button
                 key={preset.id}
                 onClick={() => setPreset(preset.id)}
-                className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
               >
                 {preset.label}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <Calendar size={18} className="text-slate-400" />
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500"
-            />
-            <span className="text-slate-500">to</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-auto">
+            <div className="flex items-center gap-2">
+              <Calendar size={16} className="text-slate-400 hidden sm:block" />
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                className="flex-1 sm:w-auto bg-slate-800 border border-slate-700 rounded-lg px-2 sm:px-3 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <span className="text-slate-500 text-center hidden sm:block">to</span>
             <input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500"
+              className="flex-1 sm:w-auto bg-slate-800 border border-slate-700 rounded-lg px-2 sm:px-3 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500"
             />
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
         {[
           { id: 'summary', label: 'Summary' },
-          { id: 'trends', label: 'Comparison' },
-          { id: 'timeseries', label: 'Over Time' },
-          { id: 'spending-trends', label: 'Spending Trends' },
+          { id: 'trends', label: 'Compare' },
+          { id: 'timeseries', label: 'Timeline' },
+          { id: 'spending-trends', label: 'Trends' },
           { id: 'month-end', label: 'Month End' },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors ${
+            className={`px-3 sm:px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors text-sm ${
               activeTab === tab.id
                 ? 'bg-violet-600 text-white'
                 : 'bg-slate-800 text-slate-400 hover:text-white'
@@ -305,35 +313,35 @@ export default function Reports() {
         <>
           {/* Summary Tab */}
           {activeTab === 'summary' && summary && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Summary Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <p className="text-slate-400 text-sm">Total Spent</p>
-                  <p className="text-3xl font-bold text-white mt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
+                  <p className="text-slate-400 text-xs sm:text-sm">Total Spent</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-white mt-1">
                     ৳{parseFloat(summary.total).toLocaleString('en-BD', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <p className="text-slate-400 text-sm">Daily Average</p>
-                  <p className="text-3xl font-bold text-white mt-1">
+                <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
+                  <p className="text-slate-400 text-xs sm:text-sm">Daily Average</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-white mt-1">
                     ৳{parseFloat(summary.average_per_day).toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <p className="text-slate-400 text-sm">Categories Used</p>
-                  <p className="text-3xl font-bold text-white mt-1">
+                <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
+                  <p className="text-slate-400 text-xs sm:text-sm">Categories Used</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-white mt-1">
                     {summary.by_category?.length || 0}
                   </p>
                 </div>
               </div>
 
               {/* Category Breakdown */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Pie Chart */}
-                <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <h3 className="font-semibold text-white mb-4">Spending by Category</h3>
-                  <div className="h-64 min-h-[256px]">
+                <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
+                  <h3 className="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Spending by Category</h3>
+                  <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
                     {pieData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <PieChart>
@@ -341,8 +349,8 @@ export default function Reports() {
                             data={pieData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={90}
+                            innerRadius={50}
+                            outerRadius={75}
                             paddingAngle={2}
                             dataKey="value"
                           >

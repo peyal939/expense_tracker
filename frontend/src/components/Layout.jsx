@@ -31,8 +31,12 @@ const navItems = [
 ]
 
 const adminItems = [
-  { path: '/admin', icon: Shield, label: 'Admin Dashboard' },
-  { path: '/admin/users', icon: Users, label: 'User Management' },
+  { path: '/admin', icon: Shield, label: 'Dashboard' },
+  { path: '/admin/users', icon: Users, label: 'Users' },
+  { path: '/admin/categories', icon: Tags, label: 'Categories' },
+  { path: '/admin/income-sources', icon: Wallet, label: 'Income Sources' },
+  { path: '/admin/expenses', icon: Receipt, label: 'All Expenses' },
+  { path: '/admin/notifications', icon: Bell, label: 'Notifications' },
 ]
 
 export default function Layout() {

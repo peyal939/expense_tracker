@@ -5,8 +5,10 @@ import {
   DollarSign, Percent, ChevronDown, ChevronUp, Briefcase,
 } from 'lucide-react'
 import { budgetsAPI, categoriesAPI } from '../services/api'
+import { useOnboarding } from '../context/OnboardingContext'
 
 export default function Budgets() {
+  const { markBudgetSet } = useOnboarding()
   const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState([])
   const [incomeSources, setIncomeSources] = useState([])
@@ -166,17 +168,17 @@ export default function Budgets() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Budget Planner</h1>
-          <p className="text-slate-400 mt-1">Manage your income and allocate spending</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Budget Planner</h1>
+          <p className="text-slate-400 mt-1 text-sm sm:text-base">Manage your income and allocate spending</p>
         </div>
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-violet-500"
+          className="bg-slate-800 border border-slate-700 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-white focus:outline-none focus:border-violet-500 text-sm sm:text-base"
         >
           {monthOptions.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -191,49 +193,49 @@ export default function Budgets() {
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {/* Total Income Card */}
-            <div className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 sm:w-24 h-20 sm:h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
               <div className="relative">
                 <div className="flex items-center gap-2 text-white/80 mb-2">
-                  <Wallet size={18} />
-                  <span className="text-sm font-medium">Total Income</span>
+                  <Wallet size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  <span className="text-xs sm:text-sm font-medium">Total Income</span>
                 </div>
-                <p className="text-2xl font-bold text-white">৳{totalIncome.toLocaleString('en-BD')}</p>
-                <p className="text-white/60 text-sm mt-1">{incomes.length} source(s)</p>
+                <p className="text-xl sm:text-2xl font-bold text-white">৳{totalIncome.toLocaleString('en-BD')}</p>
+                <p className="text-white/60 text-xs sm:text-sm mt-1">{incomes.length} source(s)</p>
               </div>
             </div>
 
             {/* Monthly Budget Card */}
-            <div className="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl p-5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div className="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 sm:w-24 h-20 sm:h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
               <div className="relative">
                 <div className="flex items-center gap-2 text-white/80 mb-2">
-                  <PiggyBank size={18} />
-                  <span className="text-sm font-medium">Monthly Budget</span>
+                  <PiggyBank size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  <span className="text-xs sm:text-sm font-medium">Monthly Budget</span>
                 </div>
-                <p className="text-2xl font-bold text-white">৳{totalBudget.toLocaleString('en-BD')}</p>
-                <p className="text-white/60 text-sm mt-1">
+                <p className="text-xl sm:text-2xl font-bold text-white">৳{totalBudget.toLocaleString('en-BD')}</p>
+                <p className="text-white/60 text-xs sm:text-sm mt-1">
                   {totalBudget === totalIncome ? 'Same as income' : 'Adjusted'}
                 </p>
               </div>
             </div>
 
             {/* Unallocated Card */}
-            <div className={`rounded-2xl p-5 relative overflow-hidden ${
+            <div className={`rounded-2xl p-4 sm:p-5 relative overflow-hidden ${
               unallocatedAmount < 0 
                 ? 'bg-gradient-to-br from-rose-600 to-pink-600' 
                 : 'bg-gradient-to-br from-amber-600 to-orange-600'
             }`}>
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+              <div className="absolute top-0 right-0 w-20 sm:w-24 h-20 sm:h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
               <div className="relative">
                 <div className="flex items-center gap-2 text-white/80 mb-2">
-                  <DollarSign size={18} />
-                  <span className="text-sm font-medium">Unallocated</span>
+                  <DollarSign size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  <span className="text-xs sm:text-sm font-medium">Unallocated</span>
                 </div>
-                <p className="text-2xl font-bold text-white">৳{Math.abs(unallocatedAmount).toLocaleString('en-BD')}</p>
-                <p className="text-white/60 text-sm mt-1">
+                <p className="text-xl sm:text-2xl font-bold text-white">৳{Math.abs(unallocatedAmount).toLocaleString('en-BD')}</p>
+                <p className="text-white/60 text-xs sm:text-sm mt-1">
                   {unallocatedAmount < 0 ? 'Over-allocated!' : `${((unallocatedAmount / totalBudget) * 100 || 0).toFixed(0)}% of budget`}
                 </p>
               </div>
@@ -244,66 +246,66 @@ export default function Budgets() {
           <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
             <button
               onClick={() => setExpandedSection(expandedSection === 'income' ? '' : 'income')}
-              className="w-full flex items-center justify-between p-5 hover:bg-slate-800/50 transition-colors"
+              className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-slate-800/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-emerald-400" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
                 </div>
                 <div className="text-left">
-                  <h2 className="text-lg font-semibold text-white">Income Sources</h2>
-                  <p className="text-sm text-slate-400">Add your monthly earnings</p>
+                  <h2 className="text-base sm:text-lg font-semibold text-white">Income Sources</h2>
+                  <p className="text-xs sm:text-sm text-slate-400">Add your monthly earnings</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-emerald-400 font-semibold">৳{totalIncome.toLocaleString('en-BD')}</span>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-emerald-400 font-semibold text-sm sm:text-base">৳{totalIncome.toLocaleString('en-BD')}</span>
                 {expandedSection === 'income' ? (
-                  <ChevronUp className="text-slate-400" />
+                  <ChevronUp className="text-slate-400 w-5 h-5" />
                 ) : (
-                  <ChevronDown className="text-slate-400" />
+                  <ChevronDown className="text-slate-400 w-5 h-5" />
                 )}
               </div>
             </button>
             
             {expandedSection === 'income' && (
-              <div className="border-t border-slate-800 p-5">
+              <div className="border-t border-slate-800 p-4 sm:p-5">
                 {incomes.length > 0 ? (
-                  <div className="space-y-3 mb-4">
+                  <div className="space-y-2 sm:space-y-3 mb-4">
                     {incomes.map((income) => (
-                      <div key={income.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center">
-                            <Briefcase className="w-5 h-5 text-slate-400" />
+                      <div key={income.id} className="flex items-center justify-between p-3 sm:p-4 bg-slate-800/50 rounded-xl">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0">
+                            <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                           </div>
-                          <div>
-                            <p className="font-medium text-white">{income.source_name || 'Other Income'}</p>
-                            {income.notes && <p className="text-sm text-slate-500">{income.notes}</p>}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-white text-sm sm:text-base truncate">{income.source_name || 'Other Income'}</p>
+                            {income.notes && <p className="text-xs sm:text-sm text-slate-500 truncate">{income.notes}</p>}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-lg font-semibold text-emerald-400">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-2">
+                          <span className="text-base sm:text-lg font-semibold text-emerald-400">
                             ৳{parseFloat(income.amount).toLocaleString('en-BD')}
                           </span>
                           <button
                             onClick={() => setEditingIncome(income)}
-                            className="p-2 text-slate-400 hover:text-violet-400 hover:bg-slate-700 rounded-lg transition-colors"
+                            className="p-1.5 sm:p-2 text-slate-400 hover:text-violet-400 hover:bg-slate-700 rounded-lg transition-colors"
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={14} className="sm:w-4 sm:h-4" />
                           </button>
                           <button
                             onClick={() => { setDeleteConfirm(income.id); setDeleteType('income'); }}
-                            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-700 rounded-lg transition-colors"
+                            className="p-1.5 sm:p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-700 rounded-lg transition-colors"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={14} className="sm:w-4 sm:h-4" />
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-6 text-slate-400 mb-4">
-                    <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>No income added for {formatMonth(selectedMonth)}</p>
+                  <div className="text-center py-4 sm:py-6 text-slate-400 mb-4">
+                    <Wallet className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm sm:text-base">No income added for {formatMonth(selectedMonth)}</p>
                   </div>
                 )}
                 <button
@@ -348,7 +350,10 @@ export default function Budgets() {
                   totalIncome={totalIncome}
                   currentBudget={totalBudget}
                   selectedMonth={selectedMonth}
-                  onUpdate={fetchAll}
+                  onUpdate={() => {
+                    fetchAll()
+                    markBudgetSet()
+                  }}
                 />
               </div>
             )}

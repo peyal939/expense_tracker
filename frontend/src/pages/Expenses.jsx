@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { expensesAPI, categoriesAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { useOnboarding } from '../context/OnboardingContext'
 import AddExpenseModal from '../components/AddExpenseModal'
 
 const iconMap = {
@@ -27,6 +28,7 @@ const getIcon = (iconName) => iconMap[iconName] || Wallet
 
 export default function Expenses() {
   const { isAdmin } = useAuth()
+  const { incrementExpenseCount } = useOnboarding()
   const [expenses, setExpenses] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -357,6 +359,7 @@ export default function Expenses() {
           onSuccess={() => {
             setShowAddModal(false)
             fetchExpenses()
+            incrementExpenseCount()
           }}
         />
       )}

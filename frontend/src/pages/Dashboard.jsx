@@ -13,7 +13,13 @@ import {
 } from 'lucide-react'
 import { expensesAPI, reportsAPI, budgetsAPI, categoriesAPI } from '../services/api'
 import AddExpenseModal from '../components/AddExpenseModal'
-import { Link } from 'react-router-dom'
+import WelcomeModal from '../components/WelcomeModal'
+import EmptyDashboardState from '../components/EmptyDashboardState'
+import FirstExpenseSuccess from '../components/FirstExpenseSuccess'
+import GettingStartedChecklist from '../components/GettingStartedChecklist'
+import { InlineFeatureTip } from '../components/FeatureTip'
+import { useOnboarding } from '../context/OnboardingContext'
+import { Link, useNavigate } from 'react-router-dom'
 
 // Icon mapping for categories
 const iconMap = {
@@ -43,6 +49,21 @@ export default function Dashboard() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [monthlyBudgetData, setMonthlyBudgetData] = useState(null)
   const [incomeData, setIncomeData] = useState(null)
+  
+  // Onboarding states
+  const [showWelcome, setShowWelcome] = useState(false)
+  const [showFirstExpenseSuccess, setShowFirstExpenseSuccess] = useState(false)
+  const [lastAddedExpense, setLastAddedExpense] = useState(null)
+  
+  const navigate = useNavigate()
+  const {
+    isFirstLogin,
+    hasSeenWelcome,
+    hasAddedFirstExpense,
+    markFirstExpenseAdded,
+    incrementExpenseCount,
+    expenseCount
+  } = useOnboarding()
 
   // Get current month dates
   const now = new Date()
@@ -57,6 +78,13 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDashboardData()
   }, [])
+
+  // Show welcome modal for first-time users
+  useEffect(() => {
+    if (!loading && isFirstLogin && !hasSeenWelcome && expenses.length === 0) {
+      setShowWelcome(true)
+    }
+  }, [loading, isFirstLogin, hasSeenWelcome, expenses.length])
 
   const fetchDashboardData = async () => {
     try {
@@ -93,9 +121,23 @@ export default function Dashboard() {
     }
   }
 
-  const handleExpenseAdded = () => {
+  const handleExpenseAdded = (expenseData) => {
+    const wasFirstExpense = !hasAddedFirstExpense && expenses.length === 0
+    
     fetchDashboardData()
     setShowAddModal(false)
+    incrementExpenseCount()
+    
+    if (wasFirstExpense) {
+      markFirstExpenseAdded()
+      setLastAddedExpense(expenseData)
+      setShowFirstExpenseSuccess(true)
+    }
+  }
+
+  const handleFirstExpenseSuccessClose = () => {
+    setShowFirstExpenseSuccess(false)
+    setLastAddedExpense(null)
   }
 
   const getCategoryById = (id) => categories.find(c => c.id === id)
@@ -134,6 +176,30 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Welcome Modal for First-time Users */}
+      {showWelcome && (
+        <WelcomeModal
+          onClose={() => setShowWelcome(false)}
+          onStartSetup={() => {
+            setShowWelcome(false)
+            navigate('/budgets')
+          }}
+        />
+      )}
+
+      {/* First Expense Success Celebration */}
+      {showFirstExpenseSuccess && (
+        <FirstExpenseSuccess
+          expenseData={lastAddedExpense}
+          onClose={handleFirstExpenseSuccessClose}
+          onViewDashboard={handleFirstExpenseSuccessClose}
+          onAddAnother={() => {
+            handleFirstExpenseSuccessClose()
+            setShowAddModal(true)
+          }}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -152,33 +218,64 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Empty State for New Users */}
+      {expenses.length === 0 && !loading && (
+        <EmptyDashboardState
+          onAddExpense={() => setShowAddModal(true)}
+          onSetupBudget={() => navigate('/budgets')}
+        />
+      )}
+
+      {/* Feature Tips - shown after a few expenses */}
+      {expenseCount >= 3 && expenseCount < 10 && !budgetStatus?.categories?.length && (
+        <InlineFeatureTip
+          tipId="budget"
+          onAction={() => navigate('/budgets')}
+        />
+      )}
+
+      {expenseCount >= 5 && expenseCount < 15 && (
+        <InlineFeatureTip
+          tipId="reports"
+          onAction={() => navigate('/reports')}
+        />
+      )}
+
+      {/* Getting Started Checklist - Show for new users with some data */}
+      {expenses.length > 0 && expenseCount < 10 && (
+        <GettingStartedChecklist
+          onAddExpense={() => setShowAddModal(true)}
+        />
+      )}
+
+      {/* Stats Cards - Only show when there's data */}
+      {(expenses.length > 0 || monthlyBudget > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
         {/* Total Spent Card */}
-        <div className="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl p-5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div className="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative">
             <div className="flex items-center gap-2 text-white/80 mb-1">
-              <Wallet size={18} />
-              <span className="text-sm font-medium">Total Spent</span>
+              <Wallet size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="text-xs sm:text-sm font-medium">Total Spent</span>
             </div>
-            <p className="text-3xl font-bold">
+            <p className="text-2xl sm:text-3xl font-bold">
               ৳{totalSpent.toLocaleString('en-BD', { minimumFractionDigits: 2 })}
             </p>
-            <div className="flex items-center gap-1 mt-2 text-sm">
-              <TrendingUp size={16} />
+            <div className="flex items-center gap-1 mt-2 text-xs sm:text-sm">
+              <TrendingUp size={14} className="sm:w-4 sm:h-4" />
               <span>This month</span>
             </div>
           </div>
         </div>
 
         {/* Budget Card */}
-        <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800">
+        <div className="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
-            <CreditCard size={18} />
-            <span className="text-sm font-medium">Monthly Budget</span>
+            <CreditCard size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <span className="text-xs sm:text-sm font-medium">Monthly Budget</span>
           </div>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-2xl sm:text-3xl font-bold text-white">
             {monthlyBudget > 0 ? `৳${monthlyBudget.toLocaleString('en-BD')}` : 'Not set'}
           </p>
           {monthlyBudget > 0 && (
@@ -202,30 +299,32 @@ export default function Dashboard() {
         </div>
 
         {/* Remaining Card */}
-        <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800">
+        <div className="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 sm:col-span-1 col-span-1">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
-            <TrendingDown size={18} />
-            <span className="text-sm font-medium">Remaining</span>
+            <TrendingDown size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <span className="text-xs sm:text-sm font-medium">Remaining</span>
           </div>
-          <p className={`text-3xl font-bold ${
+          <p className={`text-2xl sm:text-3xl font-bold ${
             monthlyBudget === 0 ? 'text-slate-500' : remainingBudget < 0 ? 'text-rose-400' : 'text-emerald-400'
           }`}>
             {monthlyBudget > 0
               ? `৳${remainingBudget.toLocaleString('en-BD', { minimumFractionDigits: 2 })}`
               : '—'}
           </p>
-          <p className="text-slate-500 text-sm mt-2">{daysRemaining} days left</p>
+          <p className="text-slate-500 text-xs sm:text-sm mt-2">{daysRemaining} days left</p>
         </div>
       </div>
+      )}
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts Section - Only show when there's data */}
+      {expenses.length > 0 && (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Weekly Spending Chart */}
-        <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-white">Weekly Spending</h3>
+        <div className="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="font-semibold text-white text-sm sm:text-base">Weekly Spending</h3>
           </div>
-          <div className="h-48 min-h-[192px]">
+          <div className="h-40 sm:h-48 min-h-[160px] sm:min-h-[192px]">
             {weeklyData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <AreaChart data={weeklyData}>
@@ -269,12 +368,12 @@ export default function Dashboard() {
         </div>
 
         {/* Category Breakdown */}
-        <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-white">By Category</h3>
+        <div className="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="font-semibold text-white text-sm sm:text-base">By Category</h3>
           </div>
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <div className="w-36 h-36 min-w-[144px] min-h-[144px] flex-shrink-0">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <div className="w-32 h-32 sm:w-36 sm:h-36 min-w-[128px] sm:min-w-[144px] min-h-[128px] sm:min-h-[144px] flex-shrink-0">
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <PieChart>
@@ -319,6 +418,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Budget Allocations Overview */}
       {budgetStatus?.categories && budgetStatus.categories.length > 0 && (
@@ -337,28 +437,28 @@ export default function Dashboard() {
           </div>
           
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <div className="bg-slate-800/50 rounded-xl p-3">
-              <p className="text-slate-400 text-xs">Total Income</p>
-              <p className="text-lg font-bold text-emerald-400">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+            <div className="bg-slate-800/50 rounded-xl p-2 sm:p-3">
+              <p className="text-slate-400 text-[10px] sm:text-xs">Total Income</p>
+              <p className="text-sm sm:text-lg font-bold text-emerald-400">
                 ৳{incomeData?.total?.toLocaleString('en-BD') || '0'}
               </p>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3">
-              <p className="text-slate-400 text-xs">Monthly Budget</p>
-              <p className="text-lg font-bold text-violet-400">
+            <div className="bg-slate-800/50 rounded-xl p-2 sm:p-3">
+              <p className="text-slate-400 text-[10px] sm:text-xs">Monthly Budget</p>
+              <p className="text-sm sm:text-lg font-bold text-violet-400">
                 ৳{monthlyBudgetData?.total_budget?.toLocaleString('en-BD') || monthlyBudget?.toLocaleString('en-BD') || '0'}
               </p>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3">
-              <p className="text-slate-400 text-xs">Allocated</p>
-              <p className="text-lg font-bold text-white">
+            <div className="bg-slate-800/50 rounded-xl p-2 sm:p-3">
+              <p className="text-slate-400 text-[10px] sm:text-xs">Allocated</p>
+              <p className="text-sm sm:text-lg font-bold text-white">
                 {budgetStatus.categories.length} categories
               </p>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3">
-              <p className="text-slate-400 text-xs">At Risk</p>
-              <p className="text-lg font-bold text-amber-400">
+            <div className="bg-slate-800/50 rounded-xl p-2 sm:p-3">
+              <p className="text-slate-400 text-[10px] sm:text-xs">At Risk</p>
+              <p className="text-sm sm:text-lg font-bold text-amber-400">
                 {budgetStatus.categories.filter(c => c.status === 'warn' || c.status === 'exceeded').length}
               </p>
             </div>
@@ -450,13 +550,13 @@ export default function Dashboard() {
 
       {/* Recent Transactions */}
       <div className="bg-slate-900 rounded-2xl border border-slate-800">
-        <div className="flex items-center justify-between p-5 border-b border-slate-800">
-          <h3 className="font-semibold text-white">Recent Transactions</h3>
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-800">
+          <h3 className="font-semibold text-white text-sm sm:text-base">Recent Transactions</h3>
           <a
             href="/expenses"
-            className="flex items-center gap-1 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            className="flex items-center gap-1 text-xs sm:text-sm text-violet-400 hover:text-violet-300 transition-colors"
           >
-            See All <ChevronRight size={16} />
+            See All <ChevronRight size={14} className="sm:w-4 sm:h-4" />
           </a>
         </div>
         <div className="divide-y divide-slate-800">
@@ -468,27 +568,27 @@ export default function Dashboard() {
             return (
               <div
                 key={expense.id}
-                className="flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors"
+                className="flex items-center justify-between p-3 sm:p-4 hover:bg-slate-800/50 transition-colors"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: `${color}20` }}
                   >
-                    <IconComponent size={22} style={{ color }} />
+                    <IconComponent size={18} className="sm:w-[22px] sm:h-[22px]" style={{ color }} />
                   </div>
-                  <div>
-                    <p className="font-medium text-white">{expense.description}</p>
-                    <p className="text-sm text-slate-500">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-white text-sm sm:text-base truncate">{expense.description}</p>
+                    <p className="text-xs sm:text-sm text-slate-500 truncate">
                       {category?.name || 'Uncategorized'}
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-white">
+                <div className="text-right flex-shrink-0 ml-2">
+                  <p className="font-semibold text-white text-sm sm:text-base">
                     -৳{parseFloat(expense.amount).toFixed(2)}
                   </p>
-                  <p className="text-sm text-slate-500">{expense.date}</p>
+                  <p className="text-xs sm:text-sm text-slate-500">{expense.date}</p>
                 </div>
               </div>
             )

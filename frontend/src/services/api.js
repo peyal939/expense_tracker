@@ -60,8 +60,11 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  login: (username, password) =>
-    api.post('/auth/token/', { username, password }),
+  login: (credentials) =>
+    api.post('/auth/token/', credentials),
+  
+  register: (data) =>
+    api.post('/auth/register/', data),
   
   refreshToken: (refresh) =>
     api.post('/auth/token/refresh/', { refresh }),
@@ -179,9 +182,75 @@ export const notificationsAPI = {
   markSingleRead: (id) => api.post(`/notifications/${id}/read/`),
 }
 
-// Admin API
+// Admin API (Legacy)
 export const adminAPI = {
   getDashboard: () => api.get('/admin/dashboard/'),
+}
+
+// Admin Panel API (New comprehensive admin endpoints)
+export const adminPanelAPI = {
+  // Dashboard & Analytics
+  getDashboardStats: () => api.get('/admin-panel/dashboard/'),
+  getSystemHealth: () => api.get('/admin-panel/health/'),
+  
+  // User Management
+  users: {
+    list: (params) => api.get('/admin-panel/users/', { params }),
+    get: (id) => api.get(`/admin-panel/users/${id}/`),
+    create: (data) => api.post('/admin-panel/users/', data),
+    update: (id, data) => api.patch(`/admin-panel/users/${id}/`, data),
+    delete: (id) => api.delete(`/admin-panel/users/${id}/`),
+    toggleStatus: (id) => api.post(`/admin-panel/users/${id}/toggle_status/`),
+    resetPassword: (id, newPassword) => 
+      api.post(`/admin-panel/users/${id}/reset_password/`, { new_password: newPassword }),
+    assignRole: (id, role) => 
+      api.post(`/admin-panel/users/${id}/assign_role/`, { role }),
+    removeRole: (id, role) => 
+      api.post(`/admin-panel/users/${id}/remove_role/`, { role }),
+    getActivity: (id) => api.get(`/admin-panel/users/${id}/activity/`),
+  },
+  
+  // Category Management
+  categories: {
+    list: () => api.get('/admin-panel/categories/'),
+    get: (id) => api.get(`/admin-panel/categories/${id}/`),
+    create: (data) => api.post('/admin-panel/categories/', data),
+    update: (id, data) => api.patch(`/admin-panel/categories/${id}/`, data),
+    delete: (id) => api.delete(`/admin-panel/categories/${id}/`),
+    getUsageStats: (id) => api.get(`/admin-panel/categories/${id}/usage_stats/`),
+    bulkCreate: (categories) => 
+      api.post('/admin-panel/categories/bulk_create/', { categories }),
+  },
+  
+  // Income Source Management
+  incomeSources: {
+    list: () => api.get('/admin-panel/income-sources/'),
+    get: (id) => api.get(`/admin-panel/income-sources/${id}/`),
+    create: (data) => api.post('/admin-panel/income-sources/', data),
+    update: (id, data) => api.patch(`/admin-panel/income-sources/${id}/`, data),
+    delete: (id) => api.delete(`/admin-panel/income-sources/${id}/`),
+    getUsageStats: (id) => api.get(`/admin-panel/income-sources/${id}/usage_stats/`),
+  },
+  
+  // Expense Management (Admin View)
+  expenses: {
+    list: (params) => api.get('/admin-panel/expenses/', { params }),
+    getSummary: (params) => api.get('/admin-panel/expenses/summary/', { params }),
+  },
+  
+  // Notifications
+  notifications: {
+    broadcast: (title, message, userIds) => 
+      api.post('/admin-panel/notifications/broadcast/', { title, message, user_ids: userIds }),
+    getStats: () => api.get('/admin-panel/notifications/stats/'),
+  },
+  
+  // Reports
+  getReportsOverview: () => api.get('/admin-panel/reports/overview/'),
+  
+  // Exports
+  exportUsers: () => api.get('/admin-panel/export/users/'),
+  exportExpenses: (params) => api.get('/admin-panel/export/expenses/', { params }),
 }
 
 // Export API

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   Plus, Edit2, Trash2, Loader2, X, AlertCircle,
   Utensils, ShoppingBag, Car, Home, Zap, Coffee, Briefcase, Heart, Gamepad2, GraduationCap, Plane, Gift, Wallet, Tag,
+  DollarSign, Shield, Smartphone, Dumbbell, Hospital, Trees, Sparkles,
 } from 'lucide-react'
 import { categoriesAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -19,6 +20,12 @@ const iconOptions = [
   { id: 'graduation', icon: GraduationCap, label: 'Education' },
   { id: 'plane', icon: Plane, label: 'Travel' },
   { id: 'gift', icon: Gift, label: 'Gifts' },
+  { id: 'hospital', icon: Hospital, label: 'Healthcare' },
+  { id: 'shield', icon: Shield, label: 'Insurance' },
+  { id: 'smartphone', icon: Smartphone, label: 'Subscriptions' },
+  { id: 'dumbbell', icon: Dumbbell, label: 'Fitness' },
+  { id: 'trees', icon: Trees, label: 'Groceries' },
+  { id: 'sparkles', icon: Sparkles, label: 'Personal Care' },
 ]
 
 const colorOptions = [
@@ -40,9 +47,37 @@ const iconMap = {
   graduation: GraduationCap,
   plane: Plane,
   gift: Gift,
+  hospital: Hospital,
+  shield: Shield,
+  smartphone: Smartphone,
+  dumbbell: Dumbbell,
+  trees: Trees,
+  sparkles: Sparkles,
 }
 
-const getIcon = (iconName) => iconMap[iconName] || Tag
+// Map category names to contextual icons
+const getCategoryIcon = (category) => {
+  const name = category.name.toLowerCase()
+  if (name.includes('food') || name.includes('dining')) return Utensils
+  if (name.includes('transport')) return Car
+  if (name.includes('shop')) return ShoppingBag
+  if (name.includes('entertain') || name.includes('game')) return Gamepad2
+  if (name.includes('bill') || name.includes('utilit')) return Zap
+  if (name.includes('health') || name.includes('medical')) return Hospital
+  if (name.includes('educat') || name.includes('school')) return GraduationCap
+  if (name.includes('travel') || name.includes('flight')) return Plane
+  if (name.includes('grocer')) return Trees
+  if (name.includes('personal') || name.includes('care')) return Sparkles
+  if (name.includes('home') || name.includes('garden')) return Home
+  if (name.includes('gift') || name.includes('donat')) return Gift
+  if (name.includes('insurance')) return Shield
+  if (name.includes('subscription')) return Smartphone
+  if (name.includes('fitness') || name.includes('gym')) return Dumbbell
+  
+  // Fallback to icon field if present
+  if (category.icon && iconMap[category.icon]) return iconMap[category.icon]
+  return Tag
+}
 
 export default function Categories() {
   const { isAdmin } = useAuth()
@@ -103,38 +138,40 @@ export default function Categories() {
         </div>
       ) : (
         <>
-          {/* System Categories */}
+          {/* Default Categories */}
           {systemCategories.length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-white">System Categories</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Default Categories</h2>
+                <p className="text-sm text-slate-500">Pre-configured for common expenses</p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {systemCategories.map((category) => {
-                  const IconComponent = getIcon(category.icon)
+                  const IconComponent = getCategoryIcon(category)
                   return (
                     <div
                       key={category.id}
-                      className="bg-slate-900 rounded-xl border border-slate-800 p-4 flex items-center justify-between"
+                      className="bg-slate-900 rounded-xl border border-slate-800 p-4 hover:border-slate-700 transition-colors"
                     >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center"
-                          style={{ backgroundColor: `${category.color_token || '#8b5cf6'}20` }}
-                        >
-                          <IconComponent size={24} style={{ color: category.color_token || '#8b5cf6' }} />
-                        </div>
-                        <div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-12 h-12 rounded-xl flex items-center justify-center"
+                            style={{ backgroundColor: `${category.color_token || '#8b5cf6'}20` }}
+                          >
+                            <IconComponent size={24} style={{ color: category.color_token || '#8b5cf6' }} />
+                          </div>
                           <p className="font-medium text-white">{category.name}</p>
-                          <p className="text-sm text-slate-500">System</p>
                         </div>
+                        {isAdmin() && (
+                          <button
+                            onClick={() => setEditingCategory(category)}
+                            className="p-2 text-slate-400 hover:text-violet-400 hover:bg-slate-800 rounded-lg transition-colors"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                        )}
                       </div>
-                      {isAdmin() && (
-                        <button
-                          onClick={() => setEditingCategory(category)}
-                          className="p-2 text-slate-400 hover:text-violet-400 hover:bg-slate-800 rounded-lg transition-colors"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                      )}
                     </div>
                   )
                 })}
@@ -144,16 +181,20 @@ export default function Categories() {
 
           {/* Custom Categories */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white">Custom Categories</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Your Categories</h2>
+              <p className="text-sm text-slate-500">Personalized for your needs</p>
+            </div>
             {customCategories.length === 0 ? (
               <div className="bg-slate-900 rounded-xl border border-slate-800 p-8 text-center">
                 <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Tag size={32} className="text-slate-600" />
                 </div>
-                <p className="text-slate-400">No custom categories yet</p>
+                <p className="text-slate-400 mb-2">No custom categories yet</p>
+                <p className="text-sm text-slate-500 mb-4">Create categories tailored to your spending habits</p>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="mt-4 px-4 py-2 text-violet-400 hover:text-violet-300 transition-colors"
+                  className="px-4 py-2 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 rounded-lg transition-colors"
                 >
                   Create your first category
                 </button>
@@ -161,37 +202,36 @@ export default function Categories() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {customCategories.map((category) => {
-                  const IconComponent = getIcon(category.icon)
+                  const IconComponent = getCategoryIcon(category)
                   return (
                     <div
                       key={category.id}
-                      className="bg-slate-900 rounded-xl border border-slate-800 p-4 flex items-center justify-between"
+                      className="bg-slate-900 rounded-xl border border-slate-800 p-4 hover:border-slate-700 transition-colors"
                     >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center"
-                          style={{ backgroundColor: `${category.color_token || '#8b5cf6'}20` }}
-                        >
-                          <IconComponent size={24} style={{ color: category.color_token || '#8b5cf6' }} />
-                        </div>
-                        <div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-12 h-12 rounded-xl flex items-center justify-center"
+                            style={{ backgroundColor: `${category.color_token || '#8b5cf6'}20` }}
+                          >
+                            <IconComponent size={24} style={{ color: category.color_token || '#8b5cf6' }} />
+                          </div>
                           <p className="font-medium text-white">{category.name}</p>
-                          <p className="text-sm text-slate-500">Custom</p>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => setEditingCategory(category)}
-                          className="p-2 text-slate-400 hover:text-violet-400 hover:bg-slate-800 rounded-lg transition-colors"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(category.id)}
-                          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setEditingCategory(category)}
+                            className="p-2 text-slate-400 hover:text-violet-400 hover:bg-slate-800 rounded-lg transition-colors"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(category.id)}
+                            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )
