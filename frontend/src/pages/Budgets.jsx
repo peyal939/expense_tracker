@@ -846,6 +846,13 @@ function AllocationModal({ allocation, categories, allocations, totalBudget, sel
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Calculate already allocated amount (excluding current allocation if editing)
+  const alreadyAllocated = allocations
+    .filter(a => !allocation || a.id !== allocation.id)
+    .reduce((sum, a) => sum + parseFloat(a.amount || 0), 0)
+  const remainingBudget = totalBudget - alreadyAllocated
+  const remainingPercent = totalBudget > 0 ? (remainingBudget / totalBudget) * 100 : 0
+
   // Initialize percentage input when allocation data loads
   useEffect(() => {
     if (allocation && totalBudget > 0) {
@@ -928,6 +935,26 @@ function AllocationModal({ allocation, categories, allocations, totalBudget, sel
 
         <form onSubmit={handleSubmit}>
           <div className="p-5 space-y-4">
+            {/* Budget Overview Info */}
+            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
+              <div>
+                <p className="text-xs text-slate-500">Total Budget</p>
+                <p className="text-sm font-semibold text-white">৳{totalBudget.toLocaleString('en-BD')}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Already Allocated</p>
+                <p className="text-sm font-semibold text-violet-400">৳{alreadyAllocated.toLocaleString('en-BD')}</p>
+              </div>
+              <div className="col-span-2 pt-2 border-t border-slate-700">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-slate-500">Remaining to Allocate</p>
+                  <p className={`text-sm font-bold ${remainingBudget >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    ৳{remainingBudget.toLocaleString('en-BD')} ({remainingPercent.toFixed(1)}%)
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {error && (
               <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm">
                 {error}
@@ -1019,15 +1046,37 @@ function AllocationModal({ allocation, categories, allocations, totalBudget, sel
               <label className="block text-sm text-slate-400 mb-2">
                 Warning at {(parseFloat(formData.warn_threshold) * 100).toFixed(0)}%
               </label>
-              <input
-                type="range"
-                min="0.5"
-                max="0.95"
-                step="0.05"
-                value={formData.warn_threshold}
-                onChange={(e) => setFormData({ ...formData, warn_threshold: e.target.value })}
-                className="w-full accent-violet-500"
-              />
+              <div className="relative pt-1">
+                <input
+                  type="range"
+                  min="0.5"
+                  max="0.95"
+                  step="0.05"
+                  value={formData.warn_threshold}
+                  onChange={(e) => setFormData({ ...formData, warn_threshold: e.target.value })}
+                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer
+                    [&::-webkit-slider-thumb]:appearance-none
+                    [&::-webkit-slider-thumb]:w-5
+                    [&::-webkit-slider-thumb]:h-5
+                    [&::-webkit-slider-thumb]:rounded-full
+                    [&::-webkit-slider-thumb]:bg-violet-500
+                    [&::-webkit-slider-thumb]:shadow-lg
+                    [&::-webkit-slider-thumb]:cursor-pointer
+                    [&::-webkit-slider-thumb]:border-2
+                    [&::-webkit-slider-thumb]:border-violet-400
+                    [&::-moz-range-thumb]:w-5
+                    [&::-moz-range-thumb]:h-5
+                    [&::-moz-range-thumb]:rounded-full
+                    [&::-moz-range-thumb]:bg-violet-500
+                    [&::-moz-range-thumb]:border-2
+                    [&::-moz-range-thumb]:border-violet-400
+                    [&::-moz-range-thumb]:cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-slate-500 mt-1">
+                  <span>50%</span>
+                  <span>95%</span>
+                </div>
+              </div>
             </div>
           </div>
 
