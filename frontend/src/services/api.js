@@ -1,6 +1,10 @@
 import axios from 'axios'
 
-const API_BASE = '/api/v1'
+// In the browser (dev) we can rely on Vite's `/api` proxy.
+// In a WebView (Capacitor) the app is served from a non-http origin,
+// so API requests must use an absolute URL.
+// Example: VITE_API_BASE_URL=https://api.example.com/api/v1
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
 // Create axios instance
 const api = axios.create({
