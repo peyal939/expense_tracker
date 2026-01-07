@@ -6,12 +6,14 @@ import {
 } from 'recharts'
 import {
   TrendingUp, TrendingDown, Wallet, CreditCard,
-  Plus, ChevronRight, Loader2, Calendar,
+  Plus, ChevronRight, Loader2, Calendar, AlertTriangle,
   Utensils, ShoppingBag, Car, Home, Zap, Coffee,
   Briefcase, Heart, Gamepad2, GraduationCap, Plane, Gift,
+  Target, PiggyBank, CheckCircle2, XCircle,
 } from 'lucide-react'
 import { expensesAPI, reportsAPI, budgetsAPI, categoriesAPI } from '../services/api'
 import AddExpenseModal from '../components/AddExpenseModal'
+import { Link } from 'react-router-dom'
 
 // Icon mapping for categories
 const iconMap = {
@@ -39,6 +41,8 @@ export default function Dashboard() {
   const [budgetStatus, setBudgetStatus] = useState(null)
   const [timeseries, setTimeseries] = useState([])
   const [showAddModal, setShowAddModal] = useState(false)
+  const [monthlyBudgetData, setMonthlyBudgetData] = useState(null)
+  const [incomeData, setIncomeData] = useState(null)
 
   // Get current month dates
   const now = new Date()
@@ -69,6 +73,19 @@ export default function Dashboard() {
       setSummary(summaryRes.data)
       setBudgetStatus(budgetRes.data)
       setTimeseries(timeseriesRes.data.series || [])
+
+      // Fetch monthly budget and income data
+      try {
+        const [monthlyRes, incomeRes] = await Promise.all([
+          budgetsAPI.monthly.getCurrent(currentMonth),
+          budgetsAPI.incomes.getTotal(currentMonth),
+        ])
+        setMonthlyBudgetData(monthlyRes.data)
+        setIncomeData(incomeRes.data)
+      } catch (err) {
+        // These are optional - may not exist yet
+        console.log('Budget/income data not set yet')
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -85,7 +102,8 @@ export default function Dashboard() {
 
   // Calculate totals
   const totalSpent = summary?.total ? parseFloat(summary.total) : 0
-  const monthlyBudget = budgetStatus?.overall?.budget_amount ? parseFloat(budgetStatus.overall.budget_amount) : 0
+  const monthlyBudget = monthlyBudgetData?.total_budget ? parseFloat(monthlyBudgetData.total_budget) : 
+                        (budgetStatus?.overall?.budget_amount ? parseFloat(budgetStatus.overall.budget_amount) : 0)
   const remainingBudget = monthlyBudget - totalSpent
   const budgetPercentage = monthlyBudget > 0 ? (totalSpent / monthlyBudget) * 100 : 0
 
@@ -301,6 +319,134 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Budget Allocations Overview */}
+      {budgetStatus?.categories && budgetStatus.categories.length > 0 && (
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-white flex items-center gap-2">
+              <Target size={18} className="text-violet-400" />
+              Budget Allocations
+            </h3>
+            <Link
+              to="/budgets"
+              className="flex items-center gap-1 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            >
+              Manage <ChevronRight size={16} />
+            </Link>
+          </div>
+          
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="bg-slate-800/50 rounded-xl p-3">
+              <p className="text-slate-400 text-xs">Total Income</p>
+              <p className="text-lg font-bold text-emerald-400">
+                ৳{incomeData?.total?.toLocaleString('en-BD') || '0'}
+              </p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-3">
+              <p className="text-slate-400 text-xs">Monthly Budget</p>
+              <p className="text-lg font-bold text-violet-400">
+                ৳{monthlyBudgetData?.total_budget?.toLocaleString('en-BD') || monthlyBudget?.toLocaleString('en-BD') || '0'}
+              </p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-3">
+              <p className="text-slate-400 text-xs">Allocated</p>
+              <p className="text-lg font-bold text-white">
+                {budgetStatus.categories.length} categories
+              </p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-3">
+              <p className="text-slate-400 text-xs">At Risk</p>
+              <p className="text-lg font-bold text-amber-400">
+                {budgetStatus.categories.filter(c => c.status === 'warn' || c.status === 'exceeded').length}
+              </p>
+            </div>
+          </div>
+
+          {/* Category Allocations */}
+          <div className="space-y-3">
+            {budgetStatus.categories.slice(0, 5).map((cat, index) => {
+              const category = getCategoryById(cat.category_id)
+              const color = category?.color_token || '#8b5cf6'
+              const percentUsed = cat.percent_used ? parseFloat(cat.percent_used) * 100 : 0
+              
+              return (
+                <div key={index} className="group">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="text-sm text-slate-300">{cat.category_name}</span>
+                      {cat.status === 'exceeded' && (
+                        <XCircle size={14} className="text-rose-400" />
+                      )}
+                      {cat.status === 'warn' && (
+                        <AlertTriangle size={14} className="text-amber-400" />
+                      )}
+                      {cat.status === 'ok' && (
+                        <CheckCircle2 size={14} className="text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="text-slate-500">
+                        ৳{parseFloat(cat.spent).toFixed(0)} / ৳{parseFloat(cat.budget_amount).toFixed(0)}
+                      </span>
+                      <span className={`font-medium ${
+                        cat.status === 'exceeded' ? 'text-rose-400' :
+                        cat.status === 'warn' ? 'text-amber-400' :
+                        'text-emerald-400'
+                      }`}>
+                        {percentUsed.toFixed(0)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        cat.status === 'exceeded' ? 'bg-rose-500' :
+                        cat.status === 'warn' ? 'bg-amber-500' :
+                        'bg-emerald-500'
+                      }`}
+                      style={{ width: `${Math.min(percentUsed, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+            {budgetStatus.categories.length > 5 && (
+              <p className="text-xs text-slate-500 text-center pt-2">
+                +{budgetStatus.categories.length - 5} more categories
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Setup Budget CTA - Only show if no budget data */}
+      {!budgetStatus?.categories?.length && !monthlyBudgetData && (
+        <div className="bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 rounded-2xl border border-violet-500/20 p-6">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-violet-500/20 flex items-center justify-center">
+              <PiggyBank size={32} className="text-violet-400" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="text-lg font-semibold text-white mb-1">Set Up Your Budget</h3>
+              <p className="text-slate-400 text-sm">
+                Track your income, set a monthly budget, and allocate spending limits to different categories.
+              </p>
+            </div>
+            <Link
+              to="/budgets"
+              className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl font-medium text-white hover:opacity-90 transition-opacity"
+            >
+              Get Started
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Recent Transactions */}
       <div className="bg-slate-900 rounded-2xl border border-slate-800">

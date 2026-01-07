@@ -1,6 +1,10 @@
 from django.urls import include, path
+from rest_framework.routers import SimpleRouter
 
-from core.views import health, admin_dashboard
+from core.views import health, admin_dashboard, NotificationViewSet
+
+router = SimpleRouter()
+router.register(r"notifications", NotificationViewSet, basename="notification")
 
 urlpatterns = [
     path("health/", health, name="health"),
@@ -13,3 +17,5 @@ urlpatterns = [
     path("export/", include("export_api.urls")),
     path("ai/", include("ai.urls")),
 ]
+
+urlpatterns += router.urls

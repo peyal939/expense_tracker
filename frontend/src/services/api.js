@@ -98,12 +98,56 @@ export const expensesAPI = {
 
 // Budgets API
 export const budgetsAPI = {
-  list: (params) => api.get('/budgets/', { params }),
-  get: (id) => api.get(`/budgets/${id}/`),
-  create: (data) => api.post('/budgets/', data),
-  update: (id, data) => api.patch(`/budgets/${id}/`, data),
-  delete: (id) => api.delete(`/budgets/${id}/`),
+  // Legacy budget endpoints (for backward compatibility)
+  list: (params) => api.get('/budgets/allocations/', { params }),
+  get: (id) => api.get(`/budgets/allocations/${id}/`),
+  create: (data) => api.post('/budgets/allocations/', data),
+  update: (id, data) => api.patch(`/budgets/allocations/${id}/`, data),
+  delete: (id) => api.delete(`/budgets/allocations/${id}/`),
   getStatus: (month) => api.get('/budgets/status/', { params: { month } }),
+  
+  // Category allocations
+  allocations: {
+    list: (params) => api.get('/budgets/allocations/', { params }),
+    get: (id) => api.get(`/budgets/allocations/${id}/`),
+    create: (data) => api.post('/budgets/allocations/', data),
+    update: (id, data) => api.patch(`/budgets/allocations/${id}/`, data),
+    delete: (id) => api.delete(`/budgets/allocations/${id}/`),
+    getAllocatedCategories: (month) => 
+      api.get('/budgets/allocations/allocated_categories/', { params: { month } }),
+  },
+  
+  // Income sources
+  incomeSources: {
+    list: () => api.get('/budgets/income-sources/'),
+    get: (id) => api.get(`/budgets/income-sources/${id}/`),
+    create: (data) => api.post('/budgets/income-sources/', data),
+    update: (id, data) => api.patch(`/budgets/income-sources/${id}/`, data),
+    delete: (id) => api.delete(`/budgets/income-sources/${id}/`),
+  },
+  
+  // Incomes
+  incomes: {
+    list: (params) => api.get('/budgets/incomes/', { params }),
+    get: (id) => api.get(`/budgets/incomes/${id}/`),
+    create: (data) => api.post('/budgets/incomes/', data),
+    update: (id, data) => api.patch(`/budgets/incomes/${id}/`, data),
+    delete: (id) => api.delete(`/budgets/incomes/${id}/`),
+    getTotal: (month) => api.get('/budgets/incomes/total/', { params: { month } }),
+  },
+  
+  // Monthly budget (adjustable total)
+  monthly: {
+    list: () => api.get('/budgets/monthly/'),
+    get: (id) => api.get(`/budgets/monthly/${id}/`),
+    create: (data) => api.post('/budgets/monthly/', data),
+    update: (id, data) => api.patch(`/budgets/monthly/${id}/`, data),
+    delete: (id) => api.delete(`/budgets/monthly/${id}/`),
+    getCurrent: (month) => api.get('/budgets/monthly/current/', { params: { month } }),
+  },
+  
+  // Warnings
+  getWarnings: (month) => api.get('/budgets/warnings/', { params: { month } }),
 }
 
 // Reports API
@@ -116,6 +160,23 @@ export const reportsAPI = {
   
   getTimeseries: (start, end, bucket = 'daily') =>
     api.get('/reports/timeseries/', { params: { start, end, bucket } }),
+  
+  // New endpoints
+  getSpendingTrends: (days = 30) =>
+    api.get('/reports/spending-trends/', { params: { days } }),
+  
+  getMonthEndSummary: (month) =>
+    api.get('/reports/month-end/', { params: { month } }),
+}
+
+// Notifications API
+export const notificationsAPI = {
+  list: () => api.get('/notifications/'),
+  getUnread: () => api.get('/notifications/unread/'),
+  getCount: () => api.get('/notifications/count/'),
+  markRead: (notificationIds) => 
+    api.post('/notifications/mark_read/', { notification_ids: notificationIds }),
+  markSingleRead: (id) => api.post(`/notifications/${id}/read/`),
 }
 
 // Admin API

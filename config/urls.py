@@ -18,14 +18,26 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.permissions import AllowAny
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+
+class PublicTokenObtainPairView(TokenObtainPairView):
+    """Token obtain view that allows unauthenticated access"""
+    permission_classes = [AllowAny]
+
+
+class PublicTokenRefreshView(TokenRefreshView):
+    """Token refresh view that allows unauthenticated access"""
+    permission_classes = [AllowAny]
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('core.urls')),
-    path('api/v1/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/v1/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/auth/token/', PublicTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/auth/token/refresh/', PublicTokenRefreshView.as_view(), name='token_refresh'),
 ]
 
 if settings.DEBUG:

@@ -153,3 +153,39 @@ class TimeSeriesReportView(generics.GenericAPIView):
 
 		series = [{"week_start": wk, "total": total} for wk, total in sorted(weekly.items())]
 		return Response({"start": start, "end": end, "bucket": bucket, "series": series})
+
+
+class SpendingTrendsView(generics.GenericAPIView):
+	"""Get spending trends and velocity analysis"""
+	permission_classes = [IsUserOrAdminRole]
+
+	def get(self, request, *args, **kwargs):
+		from budgets.services import get_spending_trends
+		
+		days = request.query_params.get("days", "30")
+		try:
+			days = int(days)
+		except ValueError:
+			days = 30
+		
+		trends = get_spending_trends(owner=request.user, days=days)
+		return Response(trends)
+
+
+class MonthEndSummaryView(generics.GenericAPIView):
+	"""Get comprehensive month-end summary report"""
+	permission_classes = [IsUserOrAdminRole]
+
+	def get(self, request, *args, **kwargs):
+		from budgets.services import generate_month_end_summary
+		
+		month_param = request.query_params.get("month")
+		if not month_param:
+			return Response({"detail": "month query param required (YYYY-MM-01)"}, status=400)
+		
+		month = parse_date(month_param)
+		if not month:
+			return Response({"detail": "Invalid month format"}, status=400)
+		
+		summary = generate_month_end_summary(owner=request.user, month=month)
+		return Response(summary)

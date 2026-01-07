@@ -53,3 +53,59 @@ def admin_dashboard(request):
 		"top_spenders": list(user_stats),
 		"top_categories": list(category_stats),
 	})
+
+
+# Notification views
+from rest_framework import viewsets, status as http_status
+from rest_framework.decorators import action
+from core.models import Notification
+from core.serializers import NotificationSerializer, MarkNotificationsReadSerializer
+
+
+class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+	"""Read-only viewset for user notifications"""
+	serializer_class = NotificationSerializer
+	permission_classes = [IsUserOrAdminRole]
+	ordering = ["-created_at"]
+
+	def get_queryset(self):
+		return Notification.objects.filter(user=self.request.user)
+
+	@action(detail=False, methods=["get"])
+	def unread(self, request):
+		"""Get unread notifications"""
+		notifications = self.get_queryset().filter(is_read=False)
+		serializer = self.get_serializer(notifications, many=True)
+		return Response({
+			"count": notifications.count(),
+			"notifications": serializer.data
+		})
+
+	@action(detail=False, methods=["post"])
+	def mark_read(self, request):
+		"""Mark notifications as read"""
+		serializer = MarkNotificationsReadSerializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+		
+		notification_ids = serializer.validated_data.get("notification_ids", [])
+		
+		qs = self.get_queryset().filter(is_read=False)
+		if notification_ids:
+			qs = qs.filter(id__in=notification_ids)
+		
+		updated = qs.update(is_read=True)
+		return Response({"marked_read": updated})
+
+	@action(detail=True, methods=["post"])
+	def read(self, request, pk=None):
+		"""Mark a single notification as read"""
+		notification = self.get_object()
+		notification.is_read = True
+		notification.save()
+		return Response({"status": "ok"})
+
+	@action(detail=False, methods=["get"])
+	def count(self, request):
+		"""Get count of unread notifications"""
+		count = self.get_queryset().filter(is_read=False).count()
+		return Response({"unread_count": count})

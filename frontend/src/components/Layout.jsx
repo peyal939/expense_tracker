@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { notificationsAPI, budgetsAPI } from '../services/api'
 import {
   LayoutDashboard,
   Receipt,
@@ -15,6 +16,10 @@ import {
   Users,
   ChevronDown,
   Wallet,
+  Bell,
+  AlertTriangle,
+  AlertCircle,
+  TrendingUp,
 } from 'lucide-react'
 
 const navItems = [
@@ -33,8 +38,63 @@ const adminItems = [
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
+  const [notificationOpen, setNotificationOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [warnings, setWarnings] = useState([])
+  const [showWarningsModal, setShowWarningsModal] = useState(false)
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
+
+  // Fetch notifications and warnings on mount
+  useEffect(() => {
+    fetchNotifications()
+    fetchWarnings()
+  }, [])
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await notificationsAPI.getUnread()
+      setNotifications(response.data.notifications || [])
+    } catch (error) {
+      console.error('Error fetching notifications:', error)
+    }
+  }
+
+  const fetchWarnings = async () => {
+    try {
+      const now = new Date()
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+      const response = await budgetsAPI.getWarnings(month)
+      const warningList = response.data.warnings || []
+      setWarnings(warningList)
+      
+      // Show modal if there are warnings (first login check)
+      if (warningList.length > 0 && !sessionStorage.getItem('warnings_shown')) {
+        setShowWarningsModal(true)
+        sessionStorage.setItem('warnings_shown', 'true')
+      }
+    } catch (error) {
+      console.error('Error fetching warnings:', error)
+    }
+  }
+
+  const markNotificationRead = async (id) => {
+    try {
+      await notificationsAPI.markSingleRead(id)
+      setNotifications(notifications.filter(n => n.id !== id))
+    } catch (error) {
+      console.error('Error marking notification read:', error)
+    }
+  }
+
+  const markAllRead = async () => {
+    try {
+      await notificationsAPI.markRead()
+      setNotifications([])
+    } catch (error) {
+      console.error('Error marking all read:', error)
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -69,12 +129,26 @@ export default function Layout() {
             </div>
             <span className="font-bold text-lg">ExpenseTracker</span>
           </div>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 hover:bg-slate-800 rounded-xl transition-colors"
-          >
-            <Menu size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Notification Bell - Mobile */}
+            <div className="relative">
+              <button
+                onClick={() => setNotificationOpen(!notificationOpen)}
+                className="p-2 hover:bg-slate-800 rounded-xl transition-colors relative"
+              >
+                <Bell size={22} />
+                {(notifications.length > 0 || warnings.length > 0) && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"></span>
+                )}
+              </button>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 hover:bg-slate-800 rounded-xl transition-colors"
+            >
+              <Menu size={24} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -183,6 +257,151 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className="lg:ml-72 pt-16 lg:pt-0 min-h-screen">
+        {/* Desktop Notification Bar */}
+        <div className="hidden lg:flex items-center justify-end gap-4 px-8 py-4 border-b border-slate-800">
+          {/* Notification Bell - Desktop */}
+          <div className="relative">
+            <button
+              onClick={() => setNotificationOpen(!notificationOpen)}
+              className="p-2 hover:bg-slate-800 rounded-xl transition-colors relative"
+            >
+              <Bell size={22} className="text-slate-400" />
+              {(notifications.length > 0 || warnings.length > 0) && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse"></span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Notification Dropdown */}
+        {notificationOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setNotificationOpen(false)}
+            />
+            <div className="fixed right-4 top-16 lg:right-8 lg:top-14 z-50 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden animate-slide-up">
+              <div className="flex items-center justify-between p-4 border-b border-slate-800">
+                <h3 className="font-semibold text-white">Notifications</h3>
+                {notifications.length > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="text-sm text-violet-400 hover:text-violet-300"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {/* Budget Warnings */}
+                {warnings.map((warning, idx) => (
+                  <div key={`warning-${idx}`} className="p-4 border-b border-slate-800 hover:bg-slate-800/50">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        warning.warning_type.includes('exceeded') 
+                          ? 'bg-rose-500/10' 
+                          : 'bg-amber-500/10'
+                      }`}>
+                        {warning.warning_type.includes('exceeded') ? (
+                          <AlertCircle size={16} className="text-rose-400" />
+                        ) : (
+                          <AlertTriangle size={16} className="text-amber-400" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-white text-sm">{warning.title}</p>
+                        <p className="text-xs text-slate-400 mt-1">{warning.message}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Other Notifications */}
+                {notifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    className="p-4 border-b border-slate-800 hover:bg-slate-800/50 cursor-pointer"
+                    onClick={() => markNotificationRead(notif.id)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-violet-500/10 flex items-center justify-center">
+                        <TrendingUp size={16} className="text-violet-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-white text-sm">{notif.title}</p>
+                        <p className="text-xs text-slate-400 mt-1">{notif.message}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {notifications.length === 0 && warnings.length === 0 && (
+                  <div className="p-8 text-center text-slate-500">
+                    <Bell size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>No notifications</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Warnings Modal (shown on login) */}
+        {showWarningsModal && warnings.length > 0 && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-slate-900 rounded-2xl w-full max-w-md border border-slate-800 overflow-hidden animate-slide-up">
+              <div className="flex items-center justify-between p-5 border-b border-slate-800">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <AlertTriangle className="text-amber-400" size={20} />
+                  Budget Alerts
+                </h3>
+                <button
+                  onClick={() => setShowWarningsModal(false)}
+                  className="p-1 hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-slate-400" />
+                </button>
+              </div>
+              <div className="p-5 space-y-3 max-h-80 overflow-y-auto">
+                {warnings.map((warning, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-xl ${
+                      warning.warning_type.includes('exceeded')
+                        ? 'bg-rose-500/10 border border-rose-500/20'
+                        : 'bg-amber-500/10 border border-amber-500/20'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {warning.warning_type.includes('exceeded') ? (
+                        <AlertCircle className="text-rose-400 mt-0.5" size={18} />
+                      ) : (
+                        <AlertTriangle className="text-amber-400 mt-0.5" size={18} />
+                      )}
+                      <div>
+                        <p className={`font-medium ${
+                          warning.warning_type.includes('exceeded') ? 'text-rose-400' : 'text-amber-400'
+                        }`}>
+                          {warning.title}
+                        </p>
+                        <p className="text-sm text-slate-300 mt-1">{warning.message}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-5 border-t border-slate-800">
+                <button
+                  onClick={() => setShowWarningsModal(false)}
+                  className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-white hover:opacity-90 transition-opacity"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="p-4 md:p-6 lg:p-8">
           <Outlet />
         </div>

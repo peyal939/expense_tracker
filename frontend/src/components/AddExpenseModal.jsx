@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { X, Loader2, Utensils, ShoppingBag, Car, Home, Zap, Coffee, Briefcase, Heart, Gamepad2, GraduationCap, Plane, Gift, Wallet } from 'lucide-react'
-import { expensesAPI } from '../services/api'
+import { useState, useEffect } from 'react'
+import { X, Loader2, Utensils, ShoppingBag, Car, Home, Zap, Coffee, Briefcase, Heart, Gamepad2, GraduationCap, Plane, Gift, Wallet, AlertCircle } from 'lucide-react'
+import { expensesAPI, budgetsAPI } from '../services/api'
 
 const iconMap = {
   utensils: Utensils,
@@ -23,13 +23,47 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
-    category: categories[0]?.id || '',
+    category: '',
     date: new Date().toISOString().split('T')[0],
     merchant: '',
     notes: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [allocatedCategoryIds, setAllocatedCategoryIds] = useState(null)
+  const [loadingAllocations, setLoadingAllocations] = useState(true)
+
+  // Fetch allocated categories on mount
+  useEffect(() => {
+    fetchAllocatedCategories()
+  }, [])
+
+  const fetchAllocatedCategories = async () => {
+    try {
+      const now = new Date()
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+      const response = await budgetsAPI.allocations.getAllocatedCategories(month)
+      setAllocatedCategoryIds(response.data.category_ids || [])
+    } catch (error) {
+      console.error('Error fetching allocated categories:', error)
+      // On error, allow all categories
+      setAllocatedCategoryIds(null)
+    } finally {
+      setLoadingAllocations(false)
+    }
+  }
+
+  // Filter categories to only show allocated ones (if allocations exist)
+  const displayCategories = allocatedCategoryIds && allocatedCategoryIds.length > 0
+    ? categories.filter(cat => allocatedCategoryIds.includes(cat.id))
+    : categories
+
+  // Set default category when allocations are loaded
+  useEffect(() => {
+    if (!loadingAllocations && displayCategories.length > 0 && !formData.category) {
+      setFormData(prev => ({ ...prev, category: displayCategories[0].id }))
+    }
+  }, [loadingAllocations, displayCategories])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -138,28 +172,51 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
 
             <div>
               <label className="block text-sm text-slate-400 mb-2">Category</label>
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {categories.map((cat) => {
-                  const IconComponent = getIcon(cat.icon)
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, category: cat.id })}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
-                        formData.category === cat.id
-                          ? 'border-violet-500 bg-violet-500/10'
-                          : 'border-slate-700 hover:border-slate-600'
-                      }`}
-                    >
-                      <IconComponent size={20} style={{ color: cat.color_token || '#8b5cf6' }} />
-                      <span className="text-xs text-slate-300 truncate w-full text-center">
-                        {cat.name.split(' ')[0]}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
+              {loadingAllocations ? (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 size={20} className="animate-spin text-violet-500" />
+                </div>
+              ) : displayCategories.length === 0 ? (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                  <div className="flex items-center gap-2 text-amber-400 mb-2">
+                    <AlertCircle size={16} />
+                    <span className="text-sm font-medium">No allocated categories</span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Please set up budget allocations first to track expenses against your budget.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {allocatedCategoryIds && allocatedCategoryIds.length > 0 && (
+                    <p className="text-xs text-slate-500 mb-2">
+                      Showing categories with budget allocations only
+                    </p>
+                  )}
+                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                    {displayCategories.map((cat) => {
+                      const IconComponent = getIcon(cat.icon)
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, category: cat.id })}
+                          className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
+                            formData.category === cat.id
+                              ? 'border-violet-500 bg-violet-500/10'
+                              : 'border-slate-700 hover:border-slate-600'
+                          }`}
+                        >
+                          <IconComponent size={20} style={{ color: cat.color_token || '#8b5cf6' }} />
+                          <span className="text-xs text-slate-300 truncate w-full text-center">
+                            {cat.name.split(' ')[0]}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             <div>
@@ -188,7 +245,7 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
           <div className="p-5 border-t border-slate-800">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || displayCategories.length === 0}
               className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
