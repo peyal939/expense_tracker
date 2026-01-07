@@ -1,8 +1,12 @@
+from pathlib import Path
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Count
+from django.http import HttpResponse, FileResponse, Http404
+from django.views.decorators.cache import never_cache
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+import mimetypes
 
 from budgets.models import Budget
 from categories.models import Category
@@ -10,6 +14,29 @@ from core.permissions import IsUserOrAdminRole, IsAdminRole
 from expenses.models import Expense
 
 User = get_user_model()
+
+
+@never_cache
+def serve_react(request):
+    """Serve the React application's index.html or static files"""
+    try:
+        # Get the requested path
+        path = request.path.lstrip('/')
+        
+        # If it's a file request (has extension), try to serve it from dist
+        if '.' in path.split('/')[-1]:
+            file_path = Path(__file__).resolve().parent.parent / 'frontend' / 'dist' / path
+            if file_path.exists() and file_path.is_file():
+                # Get mime type
+                mime_type, _ = mimetypes.guess_type(str(file_path))
+                return FileResponse(open(file_path, 'rb'), content_type=mime_type)
+        
+        # Otherwise serve index.html for React Router
+        index_path = Path(__file__).resolve().parent.parent / 'frontend' / 'dist' / 'index.html'
+        with open(index_path, 'r', encoding='utf-8') as f:
+            return HttpResponse(f.read(), content_type='text/html')
+    except FileNotFoundError:
+        return HttpResponse("React app not built. Run 'npm run build' in the frontend directory.", status=500)
 
 
 @api_view(["GET"])

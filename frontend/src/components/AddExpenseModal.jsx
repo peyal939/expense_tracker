@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
-import { X, Loader2, Utensils, ShoppingBag, Car, Home, Zap, Coffee, Briefcase, Heart, Gamepad2, GraduationCap, Plane, Gift, Wallet, AlertCircle } from 'lucide-react'
+import { 
+  X, Loader2, Utensils, ShoppingBag, Car, Home, Zap, Coffee, Briefcase, Heart, 
+  Gamepad2, GraduationCap, Plane, Gift, Wallet, AlertCircle, Hospital, Shield, 
+  Smartphone, Dumbbell, Trees, Sparkles, Tag 
+} from 'lucide-react'
 import { expensesAPI, budgetsAPI } from '../services/api'
 
 const iconMap = {
@@ -15,9 +19,37 @@ const iconMap = {
   graduation: GraduationCap,
   plane: Plane,
   gift: Gift,
+  hospital: Hospital,
+  shield: Shield,
+  smartphone: Smartphone,
+  dumbbell: Dumbbell,
+  trees: Trees,
+  sparkles: Sparkles,
 }
 
-const getIcon = (iconName) => iconMap[iconName] || Wallet
+// Map category names to contextual icons
+const getCategoryIcon = (category) => {
+  const name = category.name.toLowerCase()
+  if (name.includes('food') || name.includes('dining')) return Utensils
+  if (name.includes('transport')) return Car
+  if (name.includes('shop')) return ShoppingBag
+  if (name.includes('entertain') || name.includes('game')) return Gamepad2
+  if (name.includes('bill') || name.includes('utilit')) return Zap
+  if (name.includes('health') || name.includes('medical')) return Hospital
+  if (name.includes('educat') || name.includes('school')) return GraduationCap
+  if (name.includes('travel') || name.includes('flight')) return Plane
+  if (name.includes('grocer')) return Trees
+  if (name.includes('personal') || name.includes('care')) return Sparkles
+  if (name.includes('home') || name.includes('garden')) return Home
+  if (name.includes('gift') || name.includes('donat')) return Gift
+  if (name.includes('insurance')) return Shield
+  if (name.includes('subscription')) return Smartphone
+  if (name.includes('fitness') || name.includes('gym')) return Dumbbell
+  
+  // Fallback to icon field if present
+  if (category.icon && iconMap[category.icon]) return iconMap[category.icon]
+  return Wallet
+}
 
 export default function AddExpenseModal({ categories, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -201,7 +233,7 @@ export default function AddExpenseModal({ categories, onClose, onSuccess }) {
                   )}
                   <div className="grid grid-cols-3 gap-2 max-h-32 sm:max-h-40 overflow-y-auto">
                     {displayCategories.map((cat) => {
-                      const IconComponent = getIcon(cat.icon)
+                      const IconComponent = getCategoryIcon(cat)
                       return (
                         <button
                           key={cat.id}
